@@ -1,42 +1,66 @@
 # BudeView
 
-> Working name. A lightweight, local-first, Windows-first desktop image viewer.
+A lightweight, local-first, Windows-first desktop image viewer.
 
-BudeView 的目标不是做图片管理器、图片编辑器或云相册，而是做一个**随开随用、快速、安静、正确显示图片**的桌面查看器。
+BudeView 的目标是：
 
-当前仓库版本为 **V0.1 Design Baseline**。本版本**不包含产品代码**，只用于冻结产品方向、交互原则、技术架构、质量目标、工程规范和路线图。后续实现应以这些文档为依据；如果实现与设计发生冲突，应先更新设计与决策记录，再改代码。
+`双击图片 → 尽快看到 → 顺滑切图 → 自然缩放/拖动 → 关闭`
 
-## 核心定位
+而不是构建图库数据库、账号系统、云相册或图片编辑器。
 
-- Viewer First：首先是图片查看器。
-- Instant Open：双击图片后尽快看到内容。
-- Image First：图片优先于工具栏、面板和功能入口。
-- Correct Pixels：方向、Alpha、动画、色彩和缩放必须正确。
-- Smooth Navigation：连续切图、缩放、拖动要稳定顺滑。
-- Local First：默认不联网、不上传、不需要账号。
-- No Scope Creep：不逐步膨胀成 DAM、相册、编辑器或媒体中心。
+## 当前版本
 
-## 已冻结的技术方向
+**V0.3 — Navigation & Performance**
 
-- Windows-first
+当前支持：
+
+- JPEG / PNG
+- 文件打开 / 启动参数打开
+- 同目录 Natural Sort
+- ← / → 前后切图
+- 邻图 Preload ±2
+- 有界自适应 Decode Cache
+- Fit / Fit Width / Fit Height / Fill
+- 100% Pixel
+- Zoom-to-cursor
+- Pan
+- F11 Fullscreen
+- JSONL Trace
+- Native AOT Startup Benchmark
+
+## 技术栈
+
 - .NET 10 LTS
 - Avalonia 12
 - Native AOT
-- Viewer UI 与 Decoder / Cache / Color / Heavy Codec 解耦
-- JPEG / PNG 等基础格式优先走轻量快速路径
-- HEIC / JXL / RAW / PSD 等重型格式允许通过独立 Worker / Native Library 接入
-- 超大图片采用独立 Huge Image / Tile 路径
-- 高风险解码器预留进程隔离边界
+- Windows-first
 
-详细内容见 [docs/INDEX.md](docs/INDEX.md)。
+Avalonia 负责 GUI；Decoder / Cache / Color / Huge Image / Heavy Codec 继续保持独立架构边界。
 
-## V0.1 不包含
+## 开发检查
 
-- 产品代码
-- UI 实现
-- 安装包
-- 文件关联
-- Codec 集成
-- Benchmark 程序
+```powershell
+.\scripts\check.ps1
+```
 
-这些从 V0.2 实现阶段开始进入。
+## 运行
+
+```powershell
+.\scripts\run.ps1 -Image "C:\path\to\image.jpg"
+```
+
+## Trace
+
+```powershell
+.\scripts\run-trace.ps1 -Image "C:\path\to\image.jpg"
+```
+
+## Startup Benchmark
+
+```powershell
+.\scripts\benchmark-startup.ps1 `
+  -Image "C:\path\to\image.jpg" `
+  -Runs 5
+```
+
+详细设计见 `docs/INDEX.md`。

@@ -1,24 +1,25 @@
 # Changelog
 
-## V0.2.0 — Viewer Foundation
+## V0.3.0 — Navigation & Performance
 
-- 初始化正式 .NET 10 + Avalonia 12.1.2 应用工程。
-- 配置 Native AOT-ready、trimming 与 compiled binding 基线。
-- 新增 JPEG / PNG 打开能力。
-- 新增 Avalonia 12 `IStorageProvider` 文件选择器。
-- 支持通过启动参数直接打开图片。
-- 当前图片加载与目录扫描并行，避免目录扫描阻塞首图。
-- 新增同目录图片上下文与 Natural Sort。
-- 新增 Previous / Next 浏览。
-- 新增 Fit 与考虑 Windows RenderScaling 的 100% Pixel 模式。
-- 新增鼠标位置锚定的连续缩放。
-- 新增左键拖动 Pan。
-- 新增 Request ID 与 Cancellation，过期请求不得覆盖当前图片。
-- 新增 256 MiB 有界 LRU Decode Cache。
-- 新增可选 JSONL Trace。
-- 新增无额外测试框架依赖的 `--self-test` 基础自检。
-- 新增检查、运行、Trace 与 win-x64 Native AOT 发布脚本。
-- 修复应用启动文件缺少 `BudeView.Core` 命名空间导入导致的构建失败。
-- 修复检查脚本未正确传播外部命令退出码、失败后仍继续并误报通过的问题。
+- 新增方向感知的邻图 Preload ±2。
+- 新导航请求会立即取消上一批 Preload。
+- Preload 采用机会式缓存策略，不为了 speculative decode 驱逐已有有效缓存。
+- Decode Cache 从固定 256 MiB 调整为 256–512 MiB 自适应预算。
+- Cache 增加全局当前图片保护，避免后台任务使用过期 protected path。
+- 新增 cache budget、cache add、cache evict、preload reject 等 Trace。
+- 强化 Decode cancellation，取消后不得泄漏刚完成的 Bitmap。
+- 新增 Fit Width、Fit Height 和 Fill。
+- 新增 F11 Fullscreen 与 Esc 退出 Fullscreen。
+- Fullscreen 下隐藏 V0.3 临时工具栏和状态栏。
+- Viewer Surface 新增首帧 Render 事件，用于区分 decode 完成与真正提交绘制。
+- 新增 Native AOT 单图启动性能 Benchmark 脚本。
+- 增加 `--benchmark-once` 内部诊断参数。
+- 补充 PointerCaptureLost 处理，避免异常丢失 Pointer Capture 后残留拖动状态。
+- BudeView 自有命令行参数不再交给 Avalonia lifetime 解析。
+- 更新 Self-test，覆盖 Benchmark 参数和 Cache Budget Policy。
+- 完成 Windows 实机 Build、Self-test 和 Native AOT 发布验证。
+- 建立 V0.3 8K JPEG 启动性能基线。
+- 修正检查脚本结束提示，使其正确显示 V0.3。
 
-本版本不实现 Preload、现代格式、HDR、Shell 集成或扩展 Viewer 功能。
+本版本仍只支持 JPEG / PNG，不提前扩展图片格式。

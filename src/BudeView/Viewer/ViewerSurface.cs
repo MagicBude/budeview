@@ -6,21 +6,32 @@ using Avalonia.Media.Imaging;
 
 namespace BudeView.Viewer;
 
+public sealed class ImageRenderedEventArgs(string contentId) : EventArgs
+{
+    public string ContentId { get; } = contentId;
+}
+
 public sealed class ViewerSurface : Control
 {
     private static readonly IBrush BackgroundBrush =
         new SolidColorBrush(Color.FromRgb(20, 20, 20));
 
     private Bitmap? _bitmap;
+    private string? _contentId;
     private ViewerMode _mode = ViewerMode.FitWindow;
     private double _manualZoom = 1d;
     private Vector _pan;
     private bool _dragging;
     private Point _lastPointer;
+    private long _contentVersion;
+    private long _renderedContentVersion = -1;
 
     public Bitmap? Bitmap => _bitmap;
     public ViewerMode Mode => _mode;
     public double ZoomFactor => GetZoomFactor();
+
+    public event EventHandler? ViewChanged;
+    public event EventHandler<ImageRenderedEventArgs>? ImageRendered;
 
     public ViewerSurface()
     {
@@ -28,9 +39,14 @@ public sealed class ViewerSurface : Control
         Focusable = true;
     }
 
-    public void SetBitmap(Bitmap bitmap, bool resetView)
+    public void SetBitmap(
+        Bitmap bitmap,
+        string contentId,
+        bool resetView)
     {
         _bitmap = bitmap;
+        _contentId = contentId;
+        _contentVersion++;
 
         if (resetView)
         {
@@ -40,13 +56,14 @@ public sealed class ViewerSurface : Control
         }
 
         InvalidateVisual();
+        ViewChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void SetMode(ViewerMode mode)
     {
         _mode = mode;
 
-        if (mode is ViewerMode.FitWindow or ViewerMode.ActualSize)
+        if (mode is not ViewerMode.ManualZoom)
         {
             _pan = default;
         }
@@ -57,6 +74,7 @@ public sealed class ViewerSurface : Control
         }
 
         InvalidateVisual();
+        ViewChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public override void Render(DrawingContext context)
@@ -70,6 +88,12 @@ public sealed class ViewerSurface : Control
 
         var destination = CalculateDestinationRect(GetZoomFactor());
         context.DrawImage(_bitmap, destination);
+
+        if (_renderedContentVersion != _contentVersion && _contentId is not null)
+        {
+            _renderedContentVersion = _contentVersion;
+            ImageRendered?.Invoke(this, new ImageRenderedEventArgs(_contentId));
+        }
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
@@ -129,15 +153,26 @@ public sealed class ViewerSurface : Control
             return;
         }
 
-        _dragging = false;
-        e.Pointer.Capture(null);
+        StopDragging(e.Pointer);
         e.Handled = true;
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+        _dragging = false;
     }
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
         InvalidateVisual();
+    }
+
+    private void StopDragging(IPointer pointer)
+    {
+        _dragging = false;
+        pointer.Capture(null);
     }
 
     private void ZoomAt(Point anchor, double factor)
@@ -176,6 +211,7 @@ public sealed class ViewerSurface : Control
         _pan = newCenter - Bounds.Center;
 
         InvalidateVisual();
+        ViewChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private Rect CalculateDestinationRect(double zoom)
@@ -204,18 +240,18 @@ public sealed class ViewerSurface : Control
         {
             ViewerMode.ActualSize => 1d,
             ViewerMode.ManualZoom => _manualZoom,
-            _ => CalculateFitZoom()
+            ViewerMode.FitWidth => CalculateFitWidthZoom(),
+            ViewerMode.FitHeight => CalculateFitHeightZoom(),
+            ViewerMode.Fill => CalculateFillZoom(),
+            _ => CalculateFitWindowZoom()
         };
     }
 
-    private double CalculateFitZoom()
+    private double CalculateFitWindowZoom()
     {
         var imageSize = GetImageDipSize();
 
-        if (imageSize.Width <= 0 ||
-            imageSize.Height <= 0 ||
-            Bounds.Width <= 0 ||
-            Bounds.Height <= 0)
+        if (!CanCalculateZoom(imageSize))
         {
             return 1d;
         }
@@ -224,6 +260,42 @@ public sealed class ViewerSurface : Control
             Bounds.Width / imageSize.Width,
             Bounds.Height / imageSize.Height);
     }
+
+    private double CalculateFitWidthZoom()
+    {
+        var imageSize = GetImageDipSize();
+        return CanCalculateZoom(imageSize)
+            ? Bounds.Width / imageSize.Width
+            : 1d;
+    }
+
+    private double CalculateFitHeightZoom()
+    {
+        var imageSize = GetImageDipSize();
+        return CanCalculateZoom(imageSize)
+            ? Bounds.Height / imageSize.Height
+            : 1d;
+    }
+
+    private double CalculateFillZoom()
+    {
+        var imageSize = GetImageDipSize();
+
+        if (!CanCalculateZoom(imageSize))
+        {
+            return 1d;
+        }
+
+        return Math.Max(
+            Bounds.Width / imageSize.Width,
+            Bounds.Height / imageSize.Height);
+    }
+
+    private bool CanCalculateZoom(Size imageSize)
+        => imageSize.Width > 0 &&
+           imageSize.Height > 0 &&
+           Bounds.Width > 0 &&
+           Bounds.Height > 0;
 
     private Size GetImageDipSize()
     {

@@ -38,4 +38,4 @@ Invoke-CheckedCommand -Name 'Self-tests' -Command {
     dotnet run --project $Project -c Release --no-build -- --self-test
 }
 
-Write-Host "`nBudeView V0.2 checks passed." -ForegroundColor Green
+Write-Host "`nBudeView V0.3 checks passed." -ForegroundColor Green

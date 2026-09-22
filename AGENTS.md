@@ -1,38 +1,51 @@
 # AGENTS.md
 
-本仓库当前是 BudeView 的正式产品仓库。
+BudeView 是 Windows-first、local-first、viewer-first 的轻量图片查看器。
 
 ## 当前阶段
 
-V0.1 = Design Baseline。
+V0.3 — Navigation & Performance。
 
-在 V0.1 阶段：
+## 当前允许范围
 
-- 不新增产品代码。
-- 不提前创建复杂工程结构。
-- 不为“以后可能用到”提前引入依赖。
-- 所有实现决策必须能追溯到 docs 中的产品、架构或决策文档。
+- JPEG / PNG
+- 同目录浏览
+- Natural Sort
+- Fit / Fit Width / Fit Height / Fill / 100%
+- Zoom / Pan
+- Fullscreen
+- Request cancellation
+- Preload ±2
+- 有界 Decode Cache
+- Trace / Benchmark
 
-## 实现原则
+## 当前禁止提前实现
 
-1. Viewer First。
-2. Windows-first，不为未确认的跨平台目标提前付出复杂度。
-3. 不引入账号、云同步、AI、图库数据库、标签管理、复杂编辑、视频播放。
-4. UI 必须服务于图片，不以功能数量为目标。
-5. 性能、正确性和可维护性优先于“框架炫技”。
-6. Decoder、Cache、Color Pipeline 与 UI 解耦。
-7. 对复杂或不可信图片格式保留进程隔离能力。
-8. 大图不能默认一次性全量解码到无限内存。
-9. 所有缓存必须有明确预算、淘汰策略与取消机制。
-10. 需求变更先修改设计文档，再进入实现。
+- GIF / WebP / AVIF / HEIC / JXL
+- HDR / ICC 完整实现
+- RAW / PSD
+- Archive
+- Filmstrip
+- File Association
+- Settings
+- Tag / Library / Album
+- 账号、云、AI、推荐
 
-## 文档维护
+## 性能规则
 
-- `docs/PROJECT_STATUS.md`：当前状态。
-- `docs/CHANGELOG.md`：文档和产品版本变化。
-- `docs/decisions/decision-log.md`：重要决策。
-- `docs/roadmap/roadmap.md`：版本路线。
-- `docs/product/feature-scope.md`：功能边界。
-- `docs/architecture/architecture-overview.md`：整体架构。
+1. Current image 永远高于 preload。
+2. 用户输入不得等待 preload。
+3. 新导航立即取消旧 preload。
+4. Preload 不允许导致 Cache 无界增长。
+5. Cache 必须有预算。
+6. 优化必须有 Trace 或 Benchmark 依据。
+7. 不为了减少少量毫秒引入难以维护的复杂架构。
 
-不要新增多个重复的总清单或 `_MANIFEST.md`。
+## 工程规则
+
+- Nullable 开启。
+- Native AOT 兼容。
+- 不在 UI thread 执行重型 Decode / I/O。
+- 不使用反射型 DI 作为核心依赖。
+- UI 不直接依赖具体 Codec。
+- 先修改设计/状态文档，再扩大版本范围。

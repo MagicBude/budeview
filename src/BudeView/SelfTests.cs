@@ -11,6 +11,7 @@ internal static class SelfTests
         CheckNaturalSort(failures);
         CheckImageTypes(failures);
         CheckStartupOptions(failures);
+        CheckCacheBudgetPolicy(failures);
 
         if (failures.Count == 0)
         {
@@ -29,13 +30,18 @@ internal static class SelfTests
 
     private static void CheckNaturalSort(List<string> failures)
     {
-        var values = new[] { "10.jpg", "2.jpg", "1.jpg", "001.jpg", "20.jpg" };
+        var values =
+            new[] { "10.jpg", "2.jpg", "1.jpg", "001.jpg", "20.jpg" };
+
         Array.Sort(values, NaturalStringComparer.Instance);
 
-        var expected = new[] { "1.jpg", "001.jpg", "2.jpg", "10.jpg", "20.jpg" };
+        var expected =
+            new[] { "1.jpg", "001.jpg", "2.jpg", "10.jpg", "20.jpg" };
+
         if (!values.SequenceEqual(expected))
         {
-            failures.Add($"Natural sort mismatch: {string.Join(", ", values)}");
+            failures.Add(
+                $"Natural sort mismatch: {string.Join(", ", values)}");
         }
     }
 
@@ -46,7 +52,7 @@ internal static class SelfTests
             !ImageFileTypes.IsSupported("a.png") ||
             ImageFileTypes.IsSupported("a.gif"))
         {
-            failures.Add("V0.2 image type filter is incorrect.");
+            failures.Add("V0.3 image type filter is incorrect.");
         }
     }
 
@@ -54,17 +60,35 @@ internal static class SelfTests
     {
         var parsed = StartupOptions.Parse(
         [
+            "--benchmark-once",
             "--trace-file",
             "trace.jsonl",
             "image.jpg"
         ]);
 
         if (parsed.ImagePath is null ||
-            !parsed.ImagePath.EndsWith("image.jpg", StringComparison.OrdinalIgnoreCase) ||
+            !parsed.ImagePath.EndsWith(
+                "image.jpg",
+                StringComparison.OrdinalIgnoreCase) ||
             parsed.TraceFile is null ||
-            !parsed.TraceFile.EndsWith("trace.jsonl", StringComparison.OrdinalIgnoreCase))
+            !parsed.TraceFile.EndsWith(
+                "trace.jsonl",
+                StringComparison.OrdinalIgnoreCase) ||
+            !parsed.BenchmarkOnce)
         {
             failures.Add("Startup option parsing is incorrect.");
+        }
+    }
+
+    private static void CheckCacheBudgetPolicy(List<string> failures)
+    {
+        var budget = CacheBudgetPolicy.CalculateDefaultBytes();
+
+        if (budget < CacheBudgetPolicy.MinimumBytes ||
+            budget > CacheBudgetPolicy.MaximumBytes)
+        {
+            failures.Add(
+                $"Cache budget out of range: {budget} bytes.");
         }
     }
 }

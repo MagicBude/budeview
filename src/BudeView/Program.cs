@@ -12,7 +12,8 @@ internal static class Program
             return SelfTests.Run();
         }
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        // BudeView owns its command-line options. Avalonia does not need to parse them.
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime([]);
         return 0;
     }
 
