@@ -1,0 +1,49 @@
+<Window
+    x:Class="BudeView.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewer="using:BudeView.Viewer"
+    Width="1200"
+    Height="800"
+    MinWidth="640"
+    MinHeight="420"
+    Title="BudeView"
+    KeyDown="OnKeyDown">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Border
+            Grid.Row="0"
+            Padding="8,6"
+            Background="#161616">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Click="OpenClicked" Content="Open" />
+                <Button x:Name="PreviousButton" Click="PreviousClicked" Content="←" IsEnabled="False" />
+                <Button x:Name="NextButton" Click="NextClicked" Content="→" IsEnabled="False" />
+                <Button Click="FitClicked" Content="Fit" />
+                <Button Click="ActualSizeClicked" Content="100%" />
+            </StackPanel>
+        </Border>
+
+        <viewer:ViewerSurface
+            x:Name="Viewer"
+            Grid.Row="1" />
+
+        <Border
+            Grid.Row="2"
+            Padding="10,5"
+            Background="#161616">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock
+                    x:Name="StatusText"
+                    Grid.Column="0"
+                    Foreground="#D7D7D7"
+                    Text="Open a JPEG or PNG image." />
+                <TextBlock
+                    x:Name="PositionText"
+                    Grid.Column="1"
+                    Foreground="#9B9B9B"
+                    Text="" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
